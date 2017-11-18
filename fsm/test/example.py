@@ -8,7 +8,6 @@ from std_msgs.msg import Empty
 
 import smach
 from smach_ros import SimpleActionState
-from amee_controllers.msg import CoordinateGoal, CoordinateAction
 
 
 def monitor_cb(ud, msg):

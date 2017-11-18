@@ -10,6 +10,26 @@ package)
 Here is an example of a prototype state machine from last year
 ![smach demo](./smach_proto.png)
 
+# Get Started
+
+
+To get started, build your workspace with this package, and run
+
+```
+roslaunch fsm test.launch
+```
+
+```
+rosrun fsm competition_smach.py
+```
+
+(NOTE: there is a bug with smach that you sometimes can't kill it with
+CTRL+C.  you will have to `ps -x`, find the one that matches and `kill -9 <PID>` where <PID> is the pid from `ps`.)
+
+
+You will want to read over the documentation for the [smach package][smach] to figure 
+out what is going on.
+
 
 # About [smach]
 
