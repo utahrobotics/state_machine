@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <rosparam command="load" file="$(find amee_controllers)/config/mining_params.yaml" />
+    <node pkg="amee_controllers" type="competition_smach.py" name="competition_smach" output="screen" />
+</launch>

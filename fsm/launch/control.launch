@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <rosparam command="load" file="$(find amee_controllers)/config/control.yaml" />
+    <node pkg="amee_controllers" type="position_action_servers.py" name="position_action_server" output="screen" />
+    <node pkg="amee_controllers" type="coordinate_action_server.py" name="coordinate_action_server" output="screen" />
+</launch>

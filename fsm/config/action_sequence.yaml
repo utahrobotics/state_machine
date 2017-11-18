@@ -1,0 +1,94 @@
+# TODO: test all the states cautiously first
+
+# First localize, then...
+smach_states:
+  - pose: 'transport_no_load'
+
+  - move: 'nav_to_dig'
+
+  # - pose: 'enter_dig'
+  #- pose: 'dig_down'
+  # TODO: more dig
+  #- dumb_move: 'dumb_dig'
+  # - pose: 'transport_full_load'
+
+  # - move: 'nav_home'
+
+  # - pose: 'dump_approach'
+  # - pose: 'dump_up'
+  # - pose: 'dump_down'
+  # - pose: 'dump_up'
+  # - pose: 'dump_approach'
+
+  # rinse, repeat
+
+
+mining_params:
+  # Positions to move to relative to the collector bin (0,0)
+  moves:
+    nav_to_dig:
+      position:
+        x: -2.0
+        y: 0.0
+      deg: 0.0 # degree off the x-axis. positive is counter-clockwise
+    nav_home:
+      position:
+        x: -0.8
+        y: 0.0
+      deg: 0.0
+  #dumb_moves:
+  #  spin:
+  #    position:
+  #      x: 2.0
+  #      y: 0.0
+  #    deg: 0.0
+
+  # Positions for the actuators to go to
+  poses:
+    transport_no_load:
+      arm: 30
+      bucket: 143
+      sled: 0
+      #sled: 190
+
+    # Bucket resting on dirt
+    enter_dig:
+      arm: 30
+      bucket: 120
+      sled: 0
+      #sled: 190
+
+    # dig:
+    #   arm: 1 # can't be 0
+    #   bucket: ?
+    #   sled: 215
+
+    # TODO: other dig
+    # TODO: work these out more and test the motion
+
+    transport_full_load:
+      arm: 105
+      bucket: 140
+      sled: 0
+      #sled: 2
+
+    # Drive up to the collector bin.
+    dump_approach:
+      arm: 265
+      bucket: 118
+      sled: 0
+      #sled: 10
+
+    # Move arm up around the collector bin
+    dump_up:
+      arm: 265
+      bucket: 118
+      sled: 0
+      #sled: 130
+
+    # Sled forward and bucket down
+    dump_down:
+      arm: 265
+      bucket: 35
+      sled: 0
+      #sled: 130

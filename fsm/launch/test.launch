@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- <arg name="arm" default="150"/> -->
+  <!-- <arg name="bucket" default="100"/> -->
+  <!-- <node pkg="amee_controllers" output="screen" type="position_action_client.py" name="arm_action_client" args="arm $(arg arm)"/> -->
+  <!-- <node pkg="amee_controllers" output="screen" type="position_action_client.py" name="bucket_action_client" args="bucket $(arg bucket)"/> -->
+  <include file="$(find amee_controllers)/launch/control.launch"/>
+  <!-- <node pkg="rosbag" type="play" name="rosbag_loop" output="screen" args="-l $(find amee_controllers)/test/raise_dump.bag"/> -->
+  <node pkg="rqt_smach" type="rqt_smach" name="rqt_smach_introspection"/>
+</launch>
