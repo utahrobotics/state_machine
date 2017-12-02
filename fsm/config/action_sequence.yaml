@@ -1,13 +1,27 @@
 smach_config:
   operation_sequence:
     - move: 'nav_to_dig'
+    - move: 'nav_to_bin'
+    - move: 'nav_to_other'
   
   mining_params:
     # Positions to move to relative to the collector bin (0,0)
     moves:
       nav_to_dig:
         position:
-          x: -4.0
+          x: 4.0
+          y: 0.0
+        # degree off the x-axis. positive is counter-clockwise
+        deg: 0.0 
+      nav_to_bin:
+        position:
+          x: 2.0
+          y: 0.0
+        # degree off the x-axis. positive is counter-clockwise
+        deg: 0.0 
+      nav_to_other:
+        position:
+          x: 1.0
           y: 0.0
         # degree off the x-axis. positive is counter-clockwise
         deg: 0.0 

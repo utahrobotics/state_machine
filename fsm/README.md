@@ -16,11 +16,21 @@ Here is an example of a prototype state machine from last year
 To get started, build your workspace with this package, and run
 
 ```
+roslaunch amee_2d_nav all.launch 
+```
+
+```
 roslaunch fsm test.launch
 ```
 
 ```
 rosrun fsm competition_smach.py
+```
+
+and rviz will also be helpful 
+
+```
+rviz
 ```
 
 (NOTE: there is a bug with smach that you sometimes can't kill it with

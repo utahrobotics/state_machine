@@ -54,7 +54,7 @@ def create_move_goal(name):
 
     move_goal = MoveBaseGoal()
     move_goal.target_pose.header.stamp = rospy.Time.now()
-    move_goal.target_pose.header.frame_id = 'base_link'
+    move_goal.target_pose.header.frame_id = 'map'
     move_goal.target_pose.pose.position.x = position['x']
     move_goal.target_pose.pose.position.y = position['y']
     move_goal.target_pose.pose.orientation = Quaternion(*orientation)
@@ -83,7 +83,7 @@ def main():
     # The autonomy_sm handles the full autonomy sequence for the competition run
     autonomy_sm = StateMachine(outcomes=['succeeded','aborted','preempted'])
     with autonomy_sm:
-        # TODO: create localization state. might just be a MonitorState
+        # TODO: create state that spins to get location. might just be a MonitorState
 
         # Sequentially add all the states from the config file to the state 
         # machine, where state i transitions to state i+1
@@ -100,11 +100,14 @@ def main():
                     name = name[:-1]+str(int(name[-1])+1) # increase num by 1
             names.append(name)
 
-            StateMachine.add_auto(name, action_state, connector_outcomes=['succeeded'])
+            if i == len(operation_sequence)-1:
+                # tie the last state to the first one, so they just keep looping
+                StateMachine.add(name, action_state, transitions={'succeeded': names[0]})
+            else:
+                # add_auto adds this to the state machine and ties the next and previous states together
+                StateMachine.add_auto(name, action_state, connector_outcomes=['succeeded'])
 
-        # StateMachine.add()
-
-    # Create the concurrence contained for the fully autonomy sequence. This
+    # Create the concurrence container for the fully autonomy sequence. This
     # runs the state machine for the competition run.  It also concurrently runs
     # a state with a timer counting down from 10 minutes and a state that listens
     # to the /click/start_button topic. If either of these are triggered, it will
