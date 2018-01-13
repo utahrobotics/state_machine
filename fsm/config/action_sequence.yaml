@@ -9,19 +9,19 @@ smach_config:
     moves:
       nav_to_dig:
         position:
-          x: 4.0
+          x: 6.0
           y: 0.0
         # degree off the x-axis. positive is counter-clockwise
         deg: 0.0 
       nav_to_bin:
         position:
-          x: 2.0
+          x: 1.0
           y: 0.0
         # degree off the x-axis. positive is counter-clockwise
         deg: 0.0 
       nav_to_other:
         position:
-          x: 1.0
+          x: 3.0
           y: 0.0
         # degree off the x-axis. positive is counter-clockwise
         deg: 0.0 

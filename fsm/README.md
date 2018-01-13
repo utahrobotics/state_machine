@@ -16,7 +16,7 @@ Here is an example of a prototype state machine from last year
 To get started, build your workspace with this package, and run
 
 ```
-roslaunch amee_2d_nav all.launch 
+roslaunch amee_2dnav all.launch 
 ```
 
 ```

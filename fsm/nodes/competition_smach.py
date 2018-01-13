@@ -11,6 +11,15 @@ from geometry_msgs.msg import Twist, Quaternion
 from smach import State,StateMachine, Concurrence
 from smach_ros import SimpleActionState, MonitorState, IntrospectionServer
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from topic_tools.srv import MuxSelect
+
+
+# TODO: may want to add a watchdog to make sure this hasn't crashed or something and
+# put us in a bad state. It seems pretty reliable though and many other things
+# are perhaps just as likely to fail.  So until we believe there is a concrete concern,
+# I think there are other priorities 
+
+teleop_mode = True
 
 # gets called when ANY child state terminates.
 # If it returns True, it terminates all concurrent states
@@ -36,7 +45,14 @@ def autonomy_out_cb(outcome_map):
         return 'stay'
 
 def monitor_cb(ud, msg):
-    """Callback for the MonitorStates, listening to /click/start_button"""
+    """Callback for the MonitorStates, triggered on a /click_start_button message"""
+    global teleop_mode
+    teleop_mode = not teleop_mode
+
+    if teleop_mode:
+        mux_select('/joystick_cmd_vel')
+    else:
+        mux_select('/move_base_cmd_vel')
     # Return False when you want the MonitorState to terminate
     return False
 
@@ -110,7 +126,7 @@ def main():
     # Create the concurrence container for the fully autonomy sequence. This
     # runs the state machine for the competition run.  It also concurrently runs
     # a state with a timer counting down from 10 minutes and a state that listens
-    # to the /click/start_button topic. If either of these are triggered, it will
+    # to the /click_start_button topic. If either of these are triggered, it will
     # end autonomy and place us into the teleop state.
     # TODO: add 10 minute competition timer state
     autonomy_concurrence = Concurrence(outcomes=['enter_teleop', 'stay', 'aborted'],
@@ -122,16 +138,16 @@ def main():
         # state that runs full autonomy state machine
         Concurrence.add('AUTONOMY', autonomy_sm)
         # state that listens for toggle message
-        Concurrence.add('TOGGLE_LISTEN', MonitorState('/click/start_button', Empty, monitor_cb))
+        Concurrence.add('TOGGLE_LISTEN', MonitorState('/click_start_button', Empty, monitor_cb))
 
     # Top level state machine, containing the autonomy and teleop machines.
     top_sm = StateMachine(outcomes=['DONE'])
     with top_sm:
-        StateMachine.add('TELEOP_MODE', MonitorState('/click/start_button', Empty, monitor_cb), transitions={'invalid':'AUTONOMY_MODE', 'valid':'TELEOP_MODE', 'preempted':'AUTONOMY_MODE'})
+        StateMachine.add('TELEOP_MODE', MonitorState('/click_start_button', Empty, monitor_cb), transitions={'invalid':'AUTONOMY_MODE', 'valid':'TELEOP_MODE', 'preempted':'AUTONOMY_MODE'})
         StateMachine.add('AUTONOMY_MODE', autonomy_concurrence,
           transitions={'enter_teleop':'TELEOP_MODE', 'stay':'AUTONOMY_MODE', 'aborted':'DONE'})
 
-        #StateMachine.add('TELEOP_MODE', MonitorState('/click/start_button', Empty, monitor_cb),
+        #StateMachine.add('TELEOP_MODE', MonitorState('/click_start_button', Empty, monitor_cb),
         #  transitions={'invalid':'DONE', 'valid':'TELEOP_MODE', 'preempted':'DONE'})
 
     sis = IntrospectionServer('smach_introspection_server', top_sm, '/COMPETITION_SMACH')
@@ -142,6 +158,8 @@ def main():
 
 if __name__== '__main__':
     rospy.init_node('competition_smach')#,log_level=rospy.DEBUG)
+    # select between different topics to route to actual motors
+    mux_select = rospy.ServiceProxy('/mux_cmd_vel/select', MuxSelect)
     smach_config = rospy.get_param('/smach_config')
     operation_sequence = smach_config['operation_sequence']
     moves = smach_config['mining_params']['moves'] # locations to move to in config file
