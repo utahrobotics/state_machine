@@ -13,13 +13,16 @@ from smach_ros import SimpleActionState, MonitorState, IntrospectionServer
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from topic_tools.srv import MuxSelect
 
+# TODO: add some way to safely terminate this with a button sequence since it 
+# is such a pain to kill from cmd line
 
 # TODO: may want to add a watchdog to make sure this hasn't crashed or something and
 # put us in a bad state. It seems pretty reliable though and many other things
 # are perhaps just as likely to fail.  So until we believe there is a concrete concern,
 # I think there are other priorities 
 
-teleop_mode = True
+# whether the robot drives itself 
+teleop_mode = True  # start in teleop mode always
 
 # gets called when ANY child state terminates.
 # If it returns True, it terminates all concurrent states
@@ -27,6 +30,9 @@ def autonomy_child_term_cb(outcome_map):
     """
     If the teleop toggle is flipped, or the autonomy aborted, terminate all 
     states, else wait for all states to finish
+
+    return True means terminate all siblings
+    return False means keep going
     """
     if outcome_map['TOGGLE_LISTEN'] == 'invalid':
         return True
@@ -37,6 +43,7 @@ def autonomy_child_term_cb(outcome_map):
 
 # gets called when ALL childs terminate
 def autonomy_out_cb(outcome_map):
+    """Returns transition"""
     if outcome_map['TOGGLE_LISTEN'] == 'invalid':
         return 'enter_teleop'
     elif outcome_map['AUTONOMY'] == 'aborted':
@@ -44,7 +51,31 @@ def autonomy_out_cb(outcome_map):
     else:
         return 'stay'
 
-def monitor_cb(ud, msg):
+def teleop_child_term_cb(outcome_map):
+    """
+    If the teleop toggle is flipped, or the autonomy aborted, terminate all 
+    states, else wait for all states to finish
+
+    return True means terminate all siblings
+    return False means keep going
+    """
+    if outcome_map['TOGGLE_LISTEN'] == 'invalid':
+        return True
+    elif outcome_map['EXIT_LISTEN'] == 'invalid':
+        return True
+    else:
+        return False
+
+def teleop_out_cb(outcome_map):
+    """Returns transition for end of teleop concurrence"""
+    if outcome_map['EXIT_LISTEN'] == 'invalid':
+        return 'done'
+    elif outcome_map['TOGGLE_LISTEN'] == 'invalid':
+        return 'enter_autonomy'
+    else:
+        return 'stay'
+
+def start_btn_cb(ud, msg):
     """Callback for the MonitorStates, triggered on a /click_start_button message"""
     global teleop_mode
     teleop_mode = not teleop_mode
@@ -52,9 +83,26 @@ def monitor_cb(ud, msg):
     if teleop_mode:
         mux_select('/joystick_cmd_vel')
     else:
+        # NOTE: this will always place the state machine into the first state
         mux_select('/move_base_cmd_vel')
-    # Return False when you want the MonitorState to terminate
-    return False
+
+    # Return False when you want the MonitorState to terminate, True keeps listening 
+    return False 
+
+
+last_select_btn_time = rospy.Time(0)
+def select_btn_cb(ud, msg):
+    """Brings down this node, by double tapping the select button (two quick
+    publishes of the /click_select_button messages)"""
+    global last_select_btn_time # last time the select button was clicked
+    now = rospy.Time.now()
+
+    if (now - last_select_btn_time).to_sec() < 0.2:
+        # double tap. time to exit 
+        return False 
+    else:
+        last_select_btn_time = now 
+        return True
 
 def create_move_goal(name):
     """
@@ -138,12 +186,23 @@ def main():
         # state that runs full autonomy state machine
         Concurrence.add('AUTONOMY', autonomy_sm)
         # state that listens for toggle message
-        Concurrence.add('TOGGLE_LISTEN', MonitorState('/click_start_button', Empty, monitor_cb))
+        Concurrence.add('TOGGLE_LISTEN', MonitorState('/click_start_button', Empty, start_btn_cb))
+
+    teleop_concurrence = Concurrence(outcomes=['enter_autonomy', 'stay', 'done'],
+                            default_outcome='enter_autonomy',
+                            child_termination_cb=teleop_child_term_cb,
+                            outcome_cb=teleop_out_cb)
+
+    with teleop_concurrence:
+        Concurrence.add('TOGGLE_LISTEN', MonitorState('/click_start_button', Empty, start_btn_cb))
+        Concurrence.add('EXIT_LISTEN', MonitorState('/click_select_button', Empty, select_btn_cb))
+
 
     # Top level state machine, containing the autonomy and teleop machines.
     top_sm = StateMachine(outcomes=['DONE'])
     with top_sm:
-        StateMachine.add('TELEOP_MODE', MonitorState('/click_start_button', Empty, monitor_cb), transitions={'invalid':'AUTONOMY_MODE', 'valid':'TELEOP_MODE', 'preempted':'AUTONOMY_MODE'})
+        StateMachine.add('TELEOP_MODE', teleop_concurrence,
+          transitions={'enter_autonomy':'AUTONOMY_MODE', 'stay':'TELEOP_MODE', 'done':'DONE'})
         StateMachine.add('AUTONOMY_MODE', autonomy_concurrence,
           transitions={'enter_teleop':'TELEOP_MODE', 'stay':'AUTONOMY_MODE', 'aborted':'DONE'})
 

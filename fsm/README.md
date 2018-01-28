@@ -7,6 +7,14 @@ It is going to have code for a [Finite State Machine][fsm] (usign the ros smach
 package)
 
 
+NOTE: there is a bug with smach that you sometimes can't kill it with CTRL+C. 
+There are a few solutions to this problem.
+
+1. Go into teleop mode and double tap the select button.  Then kill the node 
+normally.
+1. Run `ps -x`, find the pid of the node and `kill -9 <PID>` it.)
+
+
 Here is an example of a prototype state machine from last year
 ![smach demo](./smach_proto.png)
 
@@ -33,8 +41,6 @@ and rviz will also be helpful
 rviz
 ```
 
-(NOTE: there is a bug with smach that you sometimes can't kill it with
-CTRL+C.  you will have to `ps -x`, find the one that matches and `kill -9 <PID>` where <PID> is the pid from `ps`.)
 
 
 You will want to read over the documentation for the [smach package][smach] to figure 
