@@ -8,8 +8,8 @@ project(fsm)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  aruco_mapping
-  aruco_ros
+  #aruco_mapping
+  #aruco_ros
   rospy
 )
 
